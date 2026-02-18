@@ -10,16 +10,7 @@ squad:
   icon: "\U0001F525"
 
   created: "2026-02-17"
-  updated: "2026-02-18"
   author: "squad-chief"
-
-  integrations:
-    ds_manager:
-      package: "@eximia-ventures/ds"
-      description: "Design System Manager — gerencia .dspack via Claude Code skills"
-      skills: ["/ds", "/ds-pack", "/ds-install", "/ds-list", "/ds-apply"]
-      integration_point: "Phase 0 smart_detection + Phase 3 ds_library_ref hook"
-      docs: "https://npmjs.com/package/@eximia-ventures/ds"
 
 agents:
   orchestrator:

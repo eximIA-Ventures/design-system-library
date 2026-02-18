@@ -344,28 +344,8 @@ phases:
       - "forge/{target}/wizard-config.yaml"
 
     steps:
-      - id: "check_ds_library_ref"
-        action: |
-          Read wizard-config.yaml → design_system.ds_library_ref.
-          IF ds_library_ref is not null:
-            → Execute step "token_reuse"
-            → Skip steps "token_setup" and "theme_config"
-          IF ds_library_ref is null:
-            → Execute step "token_setup"
-            → Execute step "theme_config"
-
-      - id: "token_reuse"
-        condition: "design_system.ds_library_ref != null"
-        action: |
-          Copy tokens from {ds_library_ref}/tokens/ to forge/{target}/design/tokens/
-          Copy components from {ds_library_ref}/components/ to forge/{target}/design/components/
-          Read {ds_library_ref}/manifest.json and log DS name/version used.
-          Do NOT generate new tokens — reuse as-is.
-        output: "Tokens and components copied from installed DS"
-
       - id: "token_setup"
-        condition: "design_system.ds_library_ref == null"
-        action: "Generate design tokens for the platform theme using brand colors and typography from wizard-config.yaml"
+        action: "Generate design tokens for the platform theme"
         output: "tokens.yaml with color, spacing, typography tokens"
 
       - id: "component_scope"
@@ -373,8 +353,7 @@ phases:
         output: "Component inventory (atoms, molecules, organisms)"
 
       - id: "theme_config"
-        condition: "design_system.ds_library_ref == null"
-        action: "Configure Shadcn/Tailwind theme from generated tokens"
+        action: "Configure Shadcn/Tailwind theme from tokens"
         output: "tailwind.config.ts + shadcn theme"
 
     output:
