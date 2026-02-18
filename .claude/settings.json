@@ -1,0 +1,27 @@
+{
+  "language": "portuguese",
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR/.claude/hooks/context-monitor.sh\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR/.claude/hooks/session-cleanup.sh\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "name": "design-system-library",
+  "version": "1.0.0",
+  "description": "Eximia Design System Library — monorepo",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "Eximia",
+  "license": "MIT",
+  "type": "commonjs",
+  "dependencies": {
+    "@aios-fullstack/pro": "^0.1.3"
+  }
+}

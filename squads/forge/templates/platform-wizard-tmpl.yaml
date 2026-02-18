@@ -1,0 +1,240 @@
+# Platform Template: Guided Wizard
+# Pattern: WIZARD
+# Used by: @dev (Phase 6 of wf-forge) as scaffold specification
+# Stack: Next.js App Router + React Hook Form + Zod + Shadcn
+# Source: BV_DX_002 stack selection for WIZARD pattern
+
+template:
+  id: "platform-wizard"
+  name: "Guided Wizard Platform"
+  version: "1.0.0"
+  pattern: "wizard"
+  description: "Assessment/diagnostic platform with structured flows, scoring, and report generation"
+
+# ─────────────────────────────────────────────────────────────
+# PAGE STRUCTURE
+# ─────────────────────────────────────────────────────────────
+
+pages:
+  - id: "home"
+    route: "/"
+    name: "Home / Assessment Directory"
+    description: "Landing page with available assessments and past results"
+    layout: "full-width"
+    sections:
+      - hero: "Platform name + value proposition + 'Start Assessment' CTA"
+      - assessment_grid: "Grid of available assessments/diagnostics with descriptions"
+      - past_results: "Previous assessment results (if authenticated)"
+      - testimonials: "Social proof / case studies"
+
+  - id: "wizard-flow"
+    route: "/assess/[assessment-id]"
+    name: "Wizard Flow"
+    description: "Multi-step assessment with progress tracking"
+    layout: "single-column-centered"
+    sections:
+      - progress_bar: "Overall progress through all steps"
+      - step_header: "Current step title and description"
+      - form_area: "Questions/inputs for current step"
+      - navigation: "Back / Next / Skip buttons"
+      - step_counter: "Step X of Y"
+
+  - id: "progress"
+    route: "/assess/[assessment-id]/progress"
+    name: "Progress View"
+    description: "Overview of all steps with completion status"
+    layout: "single-column"
+    sections:
+      - step_timeline: "Visual timeline of all steps"
+      - completion_stats: "X of Y steps completed"
+      - resume_button: "Continue from where you left off"
+
+  - id: "results"
+    route: "/assess/[assessment-id]/results"
+    name: "Results / Report"
+    description: "Final assessment results with scores, insights, and recommendations"
+    layout: "single-column"
+    sections:
+      - score_summary: "Overall score with visual indicator (gauge/chart)"
+      - category_breakdown: "Scores per category/dimension"
+      - insights: "Key findings and interpretations"
+      - recommendations: "Actionable next steps"
+      - export: "Download as PDF / Share link"
+
+  - id: "settings"
+    route: "/settings"
+    name: "Settings"
+    description: "User preferences and assessment history"
+    layout: "single-column"
+    sections:
+      - profile: "User profile"
+      - history: "All past assessments with results"
+
+# ─────────────────────────────────────────────────────────────
+# COMPONENTS
+# ─────────────────────────────────────────────────────────────
+
+components:
+  core:
+    - name: "FormStep"
+      description: "Single step in the wizard — renders questions dynamically based on schema"
+      props:
+        - "schema: ZodSchema"
+        - "questions: Question[]"
+        - "defaultValues: Record<string, any>"
+        - "onSubmit: (data: StepData) => void"
+        - "onBack: () => void"
+      question_types:
+        - "text: Short text input"
+        - "textarea: Long text input"
+        - "select: Single option from list"
+        - "multi-select: Multiple options"
+        - "radio: Single option with radio buttons"
+        - "slider: Numeric range"
+        - "rating: Star/numeric rating (1-5, 1-10)"
+        - "likert: Agreement scale"
+        - "yes-no: Boolean choice"
+
+    - name: "ProgressBar"
+      description: "Shows overall wizard progress"
+      props:
+        - "totalSteps: number"
+        - "currentStep: number"
+        - "completedSteps: number[]"
+        - "variant: 'bar' | 'dots' | 'timeline'"
+      features:
+        - "Animated transitions"
+        - "Clickable steps (for non-linear navigation)"
+        - "Step labels (optional)"
+
+    - name: "ScoreCard"
+      description: "Visual display of a score or metric"
+      props:
+        - "label: string"
+        - "score: number"
+        - "maxScore: number"
+        - "color: string (based on score range)"
+        - "icon: string"
+        - "trend: 'up' | 'down' | 'stable' (optional)"
+      variants:
+        - "gauge: Circular gauge visualization"
+        - "bar: Horizontal bar fill"
+        - "number: Large number with label"
+
+    - name: "ReportView"
+      description: "Structured report layout with sections"
+      props:
+        - "title: string"
+        - "summary: string"
+        - "sections: ReportSection[]"
+        - "exportFormats: ('pdf' | 'markdown' | 'json')[]"
+      features:
+        - "Collapsible sections"
+        - "Print-friendly layout"
+        - "Shareable link generation"
+        - "PDF export"
+
+    - name: "ResultsSummary"
+      description: "High-level results overview with key metrics"
+      props:
+        - "overallScore: number"
+        - "categories: CategoryScore[]"
+        - "insights: Insight[]"
+        - "recommendations: Recommendation[]"
+
+  optional:
+    - name: "ComparisonView"
+      description: "Compare current results with previous assessments"
+    - name: "BenchmarkIndicator"
+      description: "Show where user's score falls relative to benchmarks"
+    - name: "ActionPlan"
+      description: "Generate personalized action plan from results"
+
+# ─────────────────────────────────────────────────────────────
+# API ENDPOINTS
+# ─────────────────────────────────────────────────────────────
+
+api_endpoints:
+  - route: "GET /api/assessments"
+    description: "List available assessments"
+    response: "{ assessments: Assessment[] }"
+
+  - route: "GET /api/assessments/[id]"
+    description: "Get assessment definition with all steps and questions"
+    response: "{ assessment: AssessmentDetail }"
+
+  - route: "POST /api/assessments/[id]/start"
+    description: "Start a new assessment session"
+    request: "{ userId?: string }"
+    response: "{ session: AssessmentSession }"
+
+  - route: "PUT /api/sessions/[id]/steps/[step]"
+    description: "Submit answers for a step"
+    request: "{ answers: Record<string, any> }"
+    response: "{ saved: boolean, nextStep: number }"
+
+  - route: "POST /api/sessions/[id]/complete"
+    description: "Complete assessment and calculate results"
+    response: "{ results: AssessmentResults }"
+
+  - route: "GET /api/sessions/[id]/results"
+    description: "Get results for a completed session"
+    response: "{ results: AssessmentResults }"
+
+  - route: "POST /api/sessions/[id]/export"
+    description: "Export results as PDF"
+    request: "{ format: 'pdf' | 'markdown' }"
+    response: "{ downloadUrl: string }"
+
+# ─────────────────────────────────────────────────────────────
+# INTEGRATIONS
+# ─────────────────────────────────────────────────────────────
+
+integrations:
+  form_management:
+    library: "React Hook Form"
+    pattern: "useForm per step → validate on next → aggregate on complete"
+    features:
+      - "Per-step validation"
+      - "Persistent form state across steps"
+      - "Conditional questions based on previous answers"
+      - "Auto-save on step completion"
+
+  validation:
+    library: "Zod"
+    pattern: "Schema per step → zodResolver in useForm"
+    features:
+      - "Type-safe validation"
+      - "Custom error messages"
+      - "Conditional validation rules"
+
+  scoring:
+    pattern: "Server-side scoring engine"
+    approach:
+      - "Weighted scoring per question category"
+      - "Normalization to 0-100 scale"
+      - "Category-level subscores"
+      - "Threshold-based recommendations"
+
+  reporting:
+    library: "jsPDF + Recharts"
+    pattern: "Generate PDF from results data + chart images"
+    features:
+      - "Branded PDF reports"
+      - "Score visualizations (charts, gauges)"
+      - "Personalized recommendations"
+
+  state_management:
+    library: "React Context"
+    pattern: "WizardProvider wraps wizard flow"
+    stores:
+      - "currentStep: number"
+      - "answers: Record<string, Record<string, any>>"
+      - "completedSteps: number[]"
+      - "sessionId: string"
+
+  persistence:
+    pattern: "Save answers per step (auto-save)"
+    options:
+      - "Supabase (recommended)"
+      - "LocalStorage (MVP/offline)"

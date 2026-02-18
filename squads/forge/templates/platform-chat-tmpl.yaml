@@ -1,0 +1,182 @@
+# Platform Template: Chat Interface
+# Pattern: CHAT
+# Used by: @dev (Phase 6 of wf-forge) as scaffold specification
+# Stack: Next.js App Router + Vercel AI SDK + Shadcn Chat
+# Source: BV_DX_002 stack selection for CHAT pattern
+
+template:
+  id: "platform-chat"
+  name: "Chat Interface Platform"
+  version: "1.0.0"
+  pattern: "chat"
+  description: "Multi-agent conversational platform where users interact with agents directly"
+
+# ─────────────────────────────────────────────────────────────
+# PAGE STRUCTURE
+# ─────────────────────────────────────────────────────────────
+
+pages:
+  - id: "home"
+    route: "/"
+    name: "Home / Agent Directory"
+    description: "Landing page with available agents and quick-start options"
+    layout: "full-width"
+    sections:
+      - hero: "Platform name + tagline + CTA"
+      - agent_grid: "Grid of available agents with avatar, name, specialty"
+      - recent_conversations: "Continue where you left off (if authenticated)"
+
+  - id: "agent-selector"
+    route: "/agents"
+    name: "Agent Selector"
+    description: "Browse and select agents to chat with"
+    layout: "two-column"
+    sections:
+      - sidebar: "Agent categories / filters"
+      - agent_list: "Searchable list of agents with descriptions"
+      - agent_detail: "Selected agent bio, capabilities, example prompts"
+
+  - id: "chat"
+    route: "/chat/[agent-id]"
+    name: "Chat Interface"
+    description: "Main conversation view with a specific agent"
+    layout: "two-column"
+    sections:
+      - conversation_sidebar: "List of past conversations with this agent"
+      - chat_area: "Message history + input"
+      - agent_context: "Agent info panel (collapsible on mobile)"
+
+  - id: "settings"
+    route: "/settings"
+    name: "Settings"
+    description: "User preferences, theme, language"
+    layout: "single-column"
+    sections:
+      - profile: "User profile settings"
+      - preferences: "Chat preferences (streaming, theme, font size)"
+      - api_keys: "API key management (if applicable)"
+
+# ─────────────────────────────────────────────────────────────
+# COMPONENTS
+# ─────────────────────────────────────────────────────────────
+
+components:
+  core:
+    - name: "ChatBubble"
+      description: "Single message in conversation — supports markdown, code blocks, images"
+      props:
+        - "role: 'user' | 'assistant'"
+        - "content: string (markdown)"
+        - "timestamp: Date"
+        - "agentAvatar: string (image URL)"
+        - "isStreaming: boolean"
+      variants:
+        - "user message (right-aligned, primary color)"
+        - "agent message (left-aligned, secondary color)"
+        - "system message (centered, muted)"
+
+    - name: "AgentAvatar"
+      description: "Agent identity display — avatar image + name + role badge"
+      props:
+        - "agentId: string"
+        - "name: string"
+        - "title: string"
+        - "avatarUrl: string"
+        - "isOnline: boolean"
+
+    - name: "MessageInput"
+      description: "Text input with send button, supports attachments and commands"
+      props:
+        - "onSend: (message: string) => void"
+        - "placeholder: string"
+        - "disabled: boolean"
+        - "maxLength: number"
+      features:
+        - "Auto-resize textarea"
+        - "Shift+Enter for newline"
+        - "Enter to send"
+        - "Attachment button (optional)"
+        - "Slash commands (optional)"
+
+    - name: "ConversationList"
+      description: "Sidebar list of past conversations"
+      props:
+        - "conversations: Conversation[]"
+        - "activeId: string"
+        - "onSelect: (id: string) => void"
+        - "onNew: () => void"
+
+    - name: "TypingIndicator"
+      description: "Shows when agent is processing/streaming"
+      props:
+        - "agentName: string"
+        - "isVisible: boolean"
+
+  optional:
+    - name: "AgentSwitcher"
+      description: "Quick-switch between agents mid-conversation"
+    - name: "ConversationSearch"
+      description: "Search across all conversations"
+    - name: "ExportChat"
+      description: "Export conversation as markdown/PDF"
+
+# ─────────────────────────────────────────────────────────────
+# API ENDPOINTS
+# ─────────────────────────────────────────────────────────────
+
+api_endpoints:
+  - route: "POST /api/chat/[agent-id]"
+    description: "Send message to agent and stream response"
+    request: "{ messages: Message[], config?: AgentConfig }"
+    response: "StreamingTextResponse (Vercel AI SDK)"
+    integration: "Vercel AI SDK useChat hook"
+
+  - route: "GET /api/agents"
+    description: "List available agents"
+    response: "{ agents: Agent[] }"
+
+  - route: "GET /api/agents/[agent-id]"
+    description: "Get agent details"
+    response: "{ agent: AgentDetail }"
+
+  - route: "GET /api/conversations"
+    description: "List user conversations"
+    response: "{ conversations: Conversation[] }"
+
+  - route: "POST /api/conversations"
+    description: "Create new conversation"
+    request: "{ agentId: string, title?: string }"
+    response: "{ conversation: Conversation }"
+
+  - route: "DELETE /api/conversations/[id]"
+    description: "Delete conversation"
+    response: "{ success: boolean }"
+
+# ─────────────────────────────────────────────────────────────
+# INTEGRATIONS
+# ─────────────────────────────────────────────────────────────
+
+integrations:
+  streaming:
+    library: "Vercel AI SDK"
+    pattern: "useChat hook → POST /api/chat/[agent-id] → StreamingTextResponse"
+    features:
+      - "Real-time token streaming"
+      - "Automatic message history management"
+      - "Error handling with retry"
+      - "Abort controller for cancellation"
+
+  state_management:
+    library: "React Context + useChat"
+    pattern: "ConversationProvider wraps chat page"
+    stores:
+      - "activeConversation"
+      - "agentList"
+      - "userPreferences"
+
+  persistence:
+    pattern: "Conversations stored server-side (DB or file)"
+    options:
+      - "Supabase (recommended)"
+      - "SQLite (simple)"
+      - "File-based JSON (MVP)"

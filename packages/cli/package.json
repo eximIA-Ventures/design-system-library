@@ -1,0 +1,16 @@
+{
+  "name": "@eximia/ds",
+  "version": "0.1.0",
+  "description": "Design System manager for Claude Code — pack, install and apply design systems in any project",
+  "keywords": ["design-system", "claude-code", "aios", "atomic-design"],
+  "author": "Eximia",
+  "license": "MIT",
+  "type": "commonjs",
+  "scripts": {
+    "postinstall": "node scripts/postinstall.js"
+  },
+  "files": [
+    "scripts/",
+    "skills/"
+  ]
+}

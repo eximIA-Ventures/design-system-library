@@ -1,0 +1,118 @@
+# Squad Forge — Configuration
+# Transforms squads/agents/clones into visual interactive platforms
+
+squad:
+  name: "forge"
+  display_name: "Platform Forge"
+  version: "1.0.0"
+  description: "Transforms squads, agents, and clones into visual interactive platforms"
+  philosophy: "Making the invisible visible — every squad deserves a platform"
+  icon: "\U0001F525"
+
+  created: "2026-02-17"
+  author: "squad-chief"
+
+agents:
+  orchestrator:
+    - id: "bret-victor"
+      name: "Bret Victor"
+      title: "Forge Orchestrator"
+      file: "agents/bret-victor.md"
+      tier: "orchestrator"
+
+  tier_0:
+    - id: "design-system"
+      name: "Brad Frost"
+      title: "Design System Architect"
+      file: "external::.codex/agents/design-system.md"
+      tier: 0
+      note: "External agent from design squad — referenced, not duplicated"
+
+  tier_1:
+    - id: "kinneret"
+      name: "Kinneret"
+      title: "Platform Voice Architect"
+      file: "agents/kinneret.md"
+      tier: 1
+
+    - id: "wes-bush"
+      name: "Wes Bush"
+      title: "Platform Growth Architect"
+      file: "agents/wes-bush.md"
+      tier: 1
+
+external_agents:
+  description: "Agents from other squads/core called by wf-forge"
+  agents:
+    - id: "pm"
+      role: "PRD generation"
+      phase: 5
+    - id: "architect"
+      role: "Tech spec + data model"
+      phase: 5
+    - id: "dev"
+      role: "Implementation"
+      phase: 6
+    - id: "qa"
+      role: "Quality assurance"
+      phase: 7
+    - id: "devops"
+      role: "Deployment"
+      phase: 8
+
+workflows:
+  - id: "wf-forge"
+    name: "Platform Forge"
+    file: "workflows/wf-forge.yaml"
+    phases: 9
+    trigger: "*forge {target}"
+
+settings:
+  greeting:
+    level: "archetypal"
+    show_squad_stats: true
+    show_key_commands: true
+
+  key_commands:
+    - "*forge {squad}"
+    - "*diagnose {squad}"
+    - "*help"
+
+  execution:
+    autonomous_after_wizard: true
+    max_wizard_questions: 8
+    retry_on_fail: 2
+
+platform_patterns:
+  - id: "chat"
+    name: "Chat Interface"
+    signals: "voice_dna, persona, conversational commands"
+    stack: "Next.js + Vercel AI SDK + Shadcn Chat"
+
+  - id: "canvas"
+    name: "Canvas Builder"
+    signals: "sequential workflows, build/create commands, templates"
+    stack: "Next.js + React DnD/Konva + Shadcn"
+
+  - id: "wizard"
+    name: "Guided Wizard"
+    signals: "elicitation patterns, questionnaires, scoring"
+    stack: "Next.js + React Hook Form + Zod + Shadcn"
+
+  - id: "dashboard"
+    name: "Dashboard"
+    signals: "analytics, metrics, tracking commands"
+    stack: "Next.js + Tremor/Recharts + TanStack Table + Shadcn"
+
+keywords:
+  - "platform"
+  - "forge"
+  - "materialize"
+  - "visual"
+  - "interface"
+  - "product"
+  - "PLG"
+  - "onboarding"
+  - "design system"
+  - "microcopy"
+  - "SaaS"

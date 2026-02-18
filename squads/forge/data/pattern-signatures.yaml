@@ -1,0 +1,94 @@
+# Pattern Signatures — Structured Scoring Rules
+# Source: BV_DX_001 (Pattern Detection) from bret-victor.md
+# Derived from Victor's classification in "Magic Ink" of software types
+# [SOURCE: https://worrydream.com/MagicInk/]
+
+scoring_version: "1.0.0"
+max_score_per_pattern: 10
+
+patterns:
+  chat:
+    name: "Chat Interface"
+    description: "Squad agents accessed via conversation"
+    signals:
+      - signal: "Agent has voice_dna or persona section"
+        weight: 3
+        detection: "grep for 'voice_dna|voice-dna|persona:' in agent files"
+      - signal: "Agent has conversational commands (*ask, *chat, *advise)"
+        weight: 3
+        detection: "grep for '*ask|*chat|*advise|*counsel|*consult' in commands"
+      - signal: "Agent has emotional_states or behavioral_states"
+        weight: 2
+        detection: "grep for 'emotional_states|behavioral_states' in agent files"
+      - signal: "Squad has multiple agents users talk TO (not through)"
+        weight: 2
+        detection: "count agents with persona + greeting_levels > 1"
+
+  canvas:
+    name: "Canvas Builder"
+    description: "Build step-by-step with visual artifacts"
+    signals:
+      - signal: "Agent has sequential build/create workflows"
+        weight: 3
+        detection: "grep for 'workflow|phases|steps|sequence' in agent files"
+      - signal: "Agent has templates that produce visual artifacts"
+        weight: 3
+        detection: "check templates/ folder for output-producing templates"
+      - signal: "Agent has *build, *compose, *create commands"
+        weight: 2
+        detection: "grep for '*build|*compose|*create|*design|*craft' in commands"
+      - signal: "Workflow has phases that produce cumulative output"
+        weight: 2
+        detection: "grep for 'output:|produces:|generates:' in workflow files"
+
+  wizard:
+    name: "Guided Wizard"
+    description: "Assessments, diagnostics, and structured flows"
+    signals:
+      - signal: "Agent has elicitation patterns (structured questions)"
+        weight: 3
+        detection: "grep for 'elicit|questions|questionnaire|assessment' in agent files"
+      - signal: "Agent produces scored/evaluated output"
+        weight: 3
+        detection: "grep for 'score|evaluate|grade|assess|diagnos' in agent files"
+      - signal: "Agent has assessment or diagnostic commands"
+        weight: 2
+        detection: "grep for '*assess|*diagnose|*evaluate|*audit|*analyze' in commands"
+      - signal: "Workflow is linear with defined completion"
+        weight: 2
+        detection: "workflow has clear start→end without branching loops"
+
+  dashboard:
+    name: "Dashboard"
+    description: "Metrics, analytics, and data visualization"
+    signals:
+      - signal: "Agent has analytics or metrics commands"
+        weight: 3
+        detection: "grep for '*analytics|*metrics|*track|*measure' in commands"
+      - signal: "Agent tracks state over time"
+        weight: 3
+        detection: "grep for 'track|monitor|trend|history|progress' in agent files"
+      - signal: "Agent has *report, *status, *health commands"
+        weight: 2
+        detection: "grep for '*report|*status|*health|*overview|*summary' in commands"
+      - signal: "Output is data-heavy (tables, scores, trends)"
+        weight: 2
+        detection: "grep for 'table|chart|graph|metric|KPI|data' in output specs"
+
+classification_rules:
+  primary_pattern: "Pattern with highest score"
+  hybrid_threshold: 2
+  hybrid_rule: "If two patterns are within 2 points of each other, classify as HYBRID (primary + secondary)"
+  minimum_score: 3
+  minimum_rule: "If all scores < 3, pattern is UNCLASSIFIABLE — halt and request human input"
+
+output_format:
+  pattern: "string (chat|canvas|wizard|dashboard)"
+  is_hybrid: "boolean"
+  secondary_pattern: "string|null"
+  scores:
+    chat: "number (0-10)"
+    canvas: "number (0-10)"
+    wizard: "number (0-10)"
+    dashboard: "number (0-10)"
+  justification: "string (which signals matched and why)"

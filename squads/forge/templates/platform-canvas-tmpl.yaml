@@ -1,0 +1,205 @@
+# Platform Template: Canvas Builder
+# Pattern: CANVAS
+# Used by: @dev (Phase 6 of wf-forge) as scaffold specification
+# Stack: Next.js App Router + React DnD/Konva + Shadcn
+# Source: BV_DX_002 stack selection for CANVAS pattern
+
+template:
+  id: "platform-canvas"
+  name: "Canvas Builder Platform"
+  version: "1.0.0"
+  pattern: "canvas"
+  description: "Step-by-step visual builder where users create artifacts progressively"
+
+# ─────────────────────────────────────────────────────────────
+# PAGE STRUCTURE
+# ─────────────────────────────────────────────────────────────
+
+pages:
+  - id: "home"
+    route: "/"
+    name: "Home / Project Gallery"
+    description: "Landing page with recent projects and templates to start from"
+    layout: "full-width"
+    sections:
+      - hero: "Platform name + tagline + 'Start Building' CTA"
+      - template_gallery: "Grid of starting templates"
+      - recent_projects: "Continue recent projects (if authenticated)"
+
+  - id: "canvas-workspace"
+    route: "/canvas/[project-id]"
+    name: "Canvas Workspace"
+    description: "Main builder interface with tools, canvas, and preview"
+    layout: "three-panel"
+    sections:
+      - tool_palette: "Left sidebar — available tools, blocks, components"
+      - canvas_area: "Center — main building area with drag-drop"
+      - properties_panel: "Right sidebar — properties of selected element"
+      - toolbar: "Top — undo/redo, zoom, save, export"
+
+  - id: "step-navigation"
+    route: "/canvas/[project-id]/steps"
+    name: "Step Navigator"
+    description: "View and navigate between build phases/steps"
+    layout: "single-column"
+    sections:
+      - step_list: "Ordered list of build phases with completion status"
+      - step_detail: "Current step instructions and requirements"
+      - step_output: "Preview of what this step produces"
+
+  - id: "preview"
+    route: "/canvas/[project-id]/preview"
+    name: "Preview"
+    description: "Full preview of the built artifact"
+    layout: "full-width"
+    sections:
+      - preview_area: "Rendered output of all completed steps"
+      - device_switcher: "Toggle mobile/tablet/desktop preview"
+      - export_options: "Download, share, deploy options"
+
+  - id: "settings"
+    route: "/settings"
+    name: "Settings"
+    description: "User preferences and project settings"
+    layout: "single-column"
+    sections:
+      - profile: "User profile"
+      - defaults: "Default canvas settings (grid, snap, theme)"
+
+# ─────────────────────────────────────────────────────────────
+# COMPONENTS
+# ─────────────────────────────────────────────────────────────
+
+components:
+  core:
+    - name: "StepWizard"
+      description: "Step navigation showing current progress through build phases"
+      props:
+        - "steps: Step[]"
+        - "currentStep: number"
+        - "onStepClick: (step: number) => void"
+        - "completedSteps: number[]"
+      features:
+        - "Linear and non-linear navigation"
+        - "Step completion indicators"
+        - "Locked steps (prerequisites not met)"
+
+    - name: "DragDropZone"
+      description: "Canvas area that accepts draggable elements"
+      props:
+        - "onDrop: (item: DragItem, position: Point) => void"
+        - "elements: CanvasElement[]"
+        - "gridSize: number"
+        - "snapToGrid: boolean"
+      features:
+        - "Drag and drop from tool palette"
+        - "Resize handles"
+        - "Multi-select"
+        - "Snap to grid"
+        - "Zoom and pan"
+
+    - name: "PreviewPane"
+      description: "Live preview of the artifact being built"
+      props:
+        - "content: BuildOutput"
+        - "viewMode: 'desktop' | 'tablet' | 'mobile'"
+        - "isLive: boolean"
+      features:
+        - "Real-time preview updates"
+        - "Device frame simulation"
+        - "Zoom controls"
+
+    - name: "ToolPalette"
+      description: "Sidebar with available building blocks/tools"
+      props:
+        - "tools: Tool[]"
+        - "categories: Category[]"
+        - "searchable: boolean"
+      features:
+        - "Categorized tools"
+        - "Search/filter"
+        - "Drag-to-canvas"
+        - "Tool descriptions on hover"
+
+    - name: "LayerPanel"
+      description: "Shows element hierarchy and z-ordering"
+      props:
+        - "layers: Layer[]"
+        - "selectedId: string"
+        - "onSelect: (id: string) => void"
+        - "onReorder: (id: string, newIndex: number) => void"
+
+  optional:
+    - name: "HistoryPanel"
+      description: "Undo/redo history with snapshots"
+    - name: "CollaborationCursor"
+      description: "Show other users' cursors in real-time"
+    - name: "TemplateSelector"
+      description: "Start from pre-built templates"
+
+# ─────────────────────────────────────────────────────────────
+# API ENDPOINTS
+# ─────────────────────────────────────────────────────────────
+
+api_endpoints:
+  - route: "POST /api/projects"
+    description: "Create new project from template"
+    request: "{ templateId: string, name: string }"
+    response: "{ project: Project }"
+
+  - route: "GET /api/projects/[id]"
+    description: "Get project with all canvas data"
+    response: "{ project: ProjectDetail }"
+
+  - route: "PUT /api/projects/[id]"
+    description: "Save canvas state (auto-save)"
+    request: "{ elements: CanvasElement[], metadata: ProjectMeta }"
+    response: "{ success: boolean, savedAt: Date }"
+
+  - route: "POST /api/projects/[id]/steps/[step]/complete"
+    description: "Mark a build step as complete"
+    request: "{ output: StepOutput }"
+    response: "{ step: StepStatus, nextStep: number }"
+
+  - route: "POST /api/projects/[id]/export"
+    description: "Export the built artifact"
+    request: "{ format: 'pdf' | 'html' | 'json' | 'image' }"
+    response: "{ downloadUrl: string }"
+
+  - route: "GET /api/templates"
+    description: "List available starting templates"
+    response: "{ templates: Template[] }"
+
+# ─────────────────────────────────────────────────────────────
+# INTEGRATIONS
+# ─────────────────────────────────────────────────────────────
+
+integrations:
+  drag_and_drop:
+    library: "@dnd-kit/core"
+    pattern: "DndContext wraps workspace → useDraggable on tools → useDroppable on canvas"
+    features:
+      - "Smooth drag animations"
+      - "Drop zones with visual feedback"
+      - "Sortable layers"
+      - "Touch support"
+
+  visual_builder:
+    library: "react-konva (if free-form canvas needed)"
+    pattern: "Stage → Layer → Shape components"
+    alternative: "DOM-based builder with CSS Grid (if structured layout)"
+
+  state_management:
+    library: "Zustand"
+    pattern: "CanvasStore for elements, history, selection"
+    stores:
+      - "canvasElements: CanvasElement[]"
+      - "selectedIds: string[]"
+      - "history: HistoryEntry[]"
+      - "currentStep: number"
+
+  persistence:
+    pattern: "Auto-save on change with debounce (1s)"
+    options:
+      - "Supabase (recommended)"
+      - "LocalStorage (MVP/offline)"

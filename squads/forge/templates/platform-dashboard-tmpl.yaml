@@ -1,0 +1,239 @@
+# Platform Template: Dashboard
+# Pattern: DASHBOARD
+# Used by: @dev (Phase 6 of wf-forge) as scaffold specification
+# Stack: Next.js App Router + Tremor/Recharts + TanStack Table + Shadcn
+# Source: BV_DX_002 stack selection for DASHBOARD pattern
+
+template:
+  id: "platform-dashboard"
+  name: "Dashboard Platform"
+  version: "1.0.0"
+  pattern: "dashboard"
+  description: "Data-driven platform with metrics, analytics, and reporting"
+
+# ─────────────────────────────────────────────────────────────
+# PAGE STRUCTURE
+# ─────────────────────────────────────────────────────────────
+
+pages:
+  - id: "home"
+    route: "/"
+    name: "Home / Overview"
+    description: "High-level dashboard with key metrics and quick actions"
+    layout: "full-width"
+    sections:
+      - kpi_row: "4-6 key metric cards in a row"
+      - charts_grid: "2-3 primary charts (trends, distributions)"
+      - recent_activity: "Latest events/actions feed"
+      - quick_actions: "Common action buttons"
+
+  - id: "dashboard-overview"
+    route: "/dashboard"
+    name: "Dashboard Overview"
+    description: "Comprehensive dashboard with all metrics and visualizations"
+    layout: "two-column"
+    sections:
+      - sidebar_filters: "Date range, category, agent filters"
+      - stat_cards: "Grid of StatCard components"
+      - trend_charts: "Line/area charts showing trends over time"
+      - distribution_charts: "Bar/pie charts showing distributions"
+      - data_table: "Detailed data table with sorting/filtering"
+
+  - id: "detail-view"
+    route: "/dashboard/[entity-id]"
+    name: "Detail View"
+    description: "Drill-down view for a specific entity (agent, category, metric)"
+    layout: "single-column"
+    sections:
+      - entity_header: "Entity name, status, key stats"
+      - entity_charts: "Charts specific to this entity"
+      - entity_timeline: "Activity timeline"
+      - entity_table: "Related data table"
+      - entity_actions: "Actions available for this entity"
+
+  - id: "reports"
+    route: "/reports"
+    name: "Reports"
+    description: "Generate and view reports"
+    layout: "single-column"
+    sections:
+      - report_builder: "Select metrics, date range, format"
+      - saved_reports: "List of previously generated reports"
+      - scheduled_reports: "Automated report schedules"
+
+  - id: "settings"
+    route: "/settings"
+    name: "Settings"
+    description: "Dashboard configuration and preferences"
+    layout: "single-column"
+    sections:
+      - dashboard_layout: "Customize which widgets appear"
+      - notifications: "Alert thresholds and notification preferences"
+      - data_sources: "Configure data connections"
+      - profile: "User profile settings"
+
+# ─────────────────────────────────────────────────────────────
+# COMPONENTS
+# ─────────────────────────────────────────────────────────────
+
+components:
+  core:
+    - name: "StatCard"
+      description: "Compact metric display with value, label, and trend"
+      props:
+        - "label: string"
+        - "value: string | number"
+        - "previousValue: number (for trend calculation)"
+        - "format: 'number' | 'currency' | 'percentage'"
+        - "icon: string"
+        - "color: string"
+      variants:
+        - "default: Value + label + trend arrow"
+        - "sparkline: Value + label + mini chart"
+        - "comparison: Value + label + vs. previous period"
+
+    - name: "Chart"
+      description: "Flexible chart component supporting multiple types"
+      props:
+        - "type: 'line' | 'bar' | 'area' | 'pie' | 'donut' | 'radar'"
+        - "data: DataPoint[]"
+        - "xAxis: string"
+        - "yAxis: string | string[]"
+        - "colors: string[]"
+        - "legend: boolean"
+        - "tooltip: boolean"
+      features:
+        - "Responsive sizing"
+        - "Interactive tooltips"
+        - "Click-to-drill-down"
+        - "Export as image"
+        - "Animate on mount"
+
+    - name: "DataTable"
+      description: "Full-featured data table with TanStack Table"
+      props:
+        - "data: Record<string, any>[]"
+        - "columns: ColumnDef[]"
+        - "pageSize: number"
+        - "searchable: boolean"
+        - "exportable: boolean"
+      features:
+        - "Column sorting"
+        - "Global search"
+        - "Column filtering"
+        - "Pagination"
+        - "Row selection"
+        - "Column visibility toggle"
+        - "CSV/Excel export"
+        - "Resizable columns"
+
+    - name: "FilterBar"
+      description: "Global filter controls for dashboard data"
+      props:
+        - "filters: FilterDef[]"
+        - "activeFilters: Record<string, any>"
+        - "onFilterChange: (filters: Record<string, any>) => void"
+      filter_types:
+        - "date_range: Start/end date picker"
+        - "select: Dropdown selection"
+        - "multi_select: Multiple selections"
+        - "search: Text search"
+        - "toggle: Boolean toggle"
+
+    - name: "MetricBadge"
+      description: "Small inline metric indicator"
+      props:
+        - "value: number"
+        - "type: 'success' | 'warning' | 'danger' | 'info'"
+        - "label: string"
+
+  optional:
+    - name: "ActivityFeed"
+      description: "Real-time feed of recent events"
+    - name: "HeatMap"
+      description: "Calendar or grid heatmap visualization"
+    - name: "AlertBanner"
+      description: "Notification for threshold breaches"
+    - name: "WidgetGrid"
+      description: "Customizable drag-and-drop widget layout"
+
+# ─────────────────────────────────────────────────────────────
+# API ENDPOINTS
+# ─────────────────────────────────────────────────────────────
+
+api_endpoints:
+  - route: "GET /api/dashboard/overview"
+    description: "Get all overview metrics"
+    query: "{ dateRange: DateRange, filters?: Filters }"
+    response: "{ stats: StatCard[], charts: ChartData[] }"
+
+  - route: "GET /api/dashboard/metrics/[metric-id]"
+    description: "Get detailed data for a specific metric"
+    query: "{ dateRange: DateRange, granularity: 'hour' | 'day' | 'week' | 'month' }"
+    response: "{ metric: MetricDetail, dataPoints: DataPoint[] }"
+
+  - route: "GET /api/dashboard/entities"
+    description: "List all entities with summary metrics"
+    query: "{ page: number, pageSize: number, sort: string, filters: Filters }"
+    response: "{ entities: Entity[], total: number }"
+
+  - route: "GET /api/dashboard/entities/[id]"
+    description: "Get entity detail with metrics"
+    response: "{ entity: EntityDetail, metrics: MetricDetail[] }"
+
+  - route: "POST /api/reports/generate"
+    description: "Generate a report"
+    request: "{ metrics: string[], dateRange: DateRange, format: 'pdf' | 'csv' | 'xlsx' }"
+    response: "{ reportId: string, downloadUrl: string }"
+
+  - route: "GET /api/dashboard/activity"
+    description: "Get recent activity feed"
+    query: "{ limit: number, after?: string }"
+    response: "{ activities: Activity[], hasMore: boolean }"
+
+# ─────────────────────────────────────────────────────────────
+# INTEGRATIONS
+# ─────────────────────────────────────────────────────────────
+
+integrations:
+  charts:
+    primary: "Tremor"
+    alternative: "Recharts"
+    pattern: "Tremor components for standard charts → Recharts for custom visualizations"
+    features:
+      - "Pre-built dashboard components"
+      - "Consistent styling with Tailwind"
+      - "Responsive by default"
+      - "Dark mode support"
+
+  data_tables:
+    library: "TanStack Table"
+    pattern: "useReactTable hook → custom column definitions → Shadcn table styling"
+    features:
+      - "Virtual scrolling for large datasets"
+      - "Server-side pagination"
+      - "Column-level filtering"
+      - "Row grouping"
+
+  state_management:
+    library: "Zustand"
+    pattern: "DashboardStore for filters, date range, active entity"
+    stores:
+      - "dateRange: DateRange"
+      - "activeFilters: Filters"
+      - "activeEntity: string | null"
+      - "refreshInterval: number"
+
+  real_time:
+    library: "Supabase Realtime (optional)"
+    pattern: "Subscribe to data changes → update dashboard automatically"
+    features:
+      - "Live metric updates"
+      - "Real-time activity feed"
+      - "Auto-refresh on data change"
+
+  persistence:
+    pattern: "Dashboard preferences saved per user"
+    options:
+      - "Supabase (recommended)"
+      - "LocalStorage (widget layout)"

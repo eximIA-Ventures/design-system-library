@@ -1,0 +1,138 @@
+# Stack Recommendations — Pattern-to-Technology Mapping
+# Source: BV_DX_002 (Stack Selection) from bret-victor.md
+# "It is our sad but unavoidable responsibility as system designers to build our own tools."
+# [SOURCE: https://worrydream.com/LadderOfAbstraction/]
+
+stack_version: "1.0.0"
+
+default_stack:
+  description: "Always included regardless of pattern"
+  framework: "Next.js App Router"
+  language: "TypeScript (strict mode)"
+  styling: "Tailwind CSS v4"
+  components: "Shadcn/ui"
+  tokens: "Design tokens from @design-system"
+  package_manager: "pnpm"
+  linting: "ESLint + Prettier"
+  testing: "Vitest + Playwright"
+
+pattern_specific:
+  chat:
+    name: "Chat Interface Stack"
+    primary_libraries:
+      - name: "Vercel AI SDK"
+        package: "ai"
+        purpose: "LLM streaming, message handling, tool calls"
+        docs: "https://sdk.vercel.ai"
+      - name: "Shadcn Chat"
+        package: "@shadcn/ui"
+        purpose: "Chat bubbles, message input, conversation layout"
+        components:
+          - "ChatBubble"
+          - "AgentAvatar"
+          - "MessageInput"
+          - "ConversationList"
+          - "TypingIndicator"
+    optional_libraries:
+      - name: "Supabase Realtime"
+        package: "@supabase/supabase-js"
+        purpose: "Real-time message sync, presence"
+      - name: "React Markdown"
+        package: "react-markdown"
+        purpose: "Render markdown in chat responses"
+
+  canvas:
+    name: "Canvas Builder Stack"
+    primary_libraries:
+      - name: "React DnD"
+        package: "@dnd-kit/core"
+        purpose: "Drag and drop interactions"
+        docs: "https://dndkit.com"
+      - name: "Konva (alternative)"
+        package: "react-konva"
+        purpose: "Canvas-based visual builder (if free-form needed)"
+        docs: "https://konvajs.org"
+      - name: "Shadcn"
+        package: "@shadcn/ui"
+        purpose: "Step navigation, tool palettes, panels"
+        components:
+          - "StepWizard"
+          - "DragDropZone"
+          - "PreviewPane"
+          - "ToolPalette"
+          - "LayerPanel"
+    optional_libraries:
+      - name: "Zustand"
+        package: "zustand"
+        purpose: "Canvas state management"
+      - name: "React Flow"
+        package: "reactflow"
+        purpose: "Node-based visual builder (if graph-like)"
+
+  wizard:
+    name: "Guided Wizard Stack"
+    primary_libraries:
+      - name: "React Hook Form"
+        package: "react-hook-form"
+        purpose: "Multi-step form management"
+        docs: "https://react-hook-form.com"
+      - name: "Zod"
+        package: "zod"
+        purpose: "Schema validation for each step"
+        docs: "https://zod.dev"
+      - name: "Shadcn"
+        package: "@shadcn/ui"
+        purpose: "Form components, progress indicators"
+        components:
+          - "FormStep"
+          - "ProgressBar"
+          - "ScoreCard"
+          - "ReportView"
+          - "ResultsSummary"
+    optional_libraries:
+      - name: "jsPDF"
+        package: "jspdf"
+        purpose: "PDF report generation"
+      - name: "Recharts"
+        package: "recharts"
+        purpose: "Score visualization in results"
+
+  dashboard:
+    name: "Dashboard Stack"
+    primary_libraries:
+      - name: "Tremor"
+        package: "@tremor/react"
+        purpose: "Dashboard components (charts, stats, lists)"
+        docs: "https://tremor.so"
+      - name: "Recharts (alternative)"
+        package: "recharts"
+        purpose: "Custom chart visualizations"
+        docs: "https://recharts.org"
+      - name: "TanStack Table"
+        package: "@tanstack/react-table"
+        purpose: "Data tables with sorting, filtering, pagination"
+        docs: "https://tanstack.com/table"
+      - name: "Shadcn"
+        package: "@shadcn/ui"
+        purpose: "Cards, filters, layout"
+        components:
+          - "StatCard"
+          - "Chart"
+          - "DataTable"
+          - "FilterBar"
+          - "MetricBadge"
+    optional_libraries:
+      - name: "date-fns"
+        package: "date-fns"
+        purpose: "Date range filtering and formatting"
+      - name: "Supabase"
+        package: "@supabase/supabase-js"
+        purpose: "Real-time data subscriptions"
+
+selection_rules:
+  - "Pattern determines primary_libraries — always install all"
+  - "optional_libraries are suggested, not mandatory"
+  - "default_stack is ALWAYS included regardless of pattern"
+  - "If HYBRID pattern, merge primary_libraries from both patterns"
+  - "If conflict between libraries, prefer the primary pattern's choice"
+  - "Custom stack overrides from wizard-config.yaml take precedence"

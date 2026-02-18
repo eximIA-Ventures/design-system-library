@@ -1,0 +1,615 @@
+# wf-forge.yaml
+# Platform Forge Workflow — Transforms squads/agents into visual interactive platforms
+# Executor: @bret-victor (orchestrator)
+
+name: "Platform Forge"
+id: "wf-forge"
+version: "1.0.0"
+squad: "forge"
+orchestrator: "bret-victor"
+
+description: |
+  Multi-phase workflow that takes any squad, agent, or clone and transforms it
+  into a visual interactive platform. Bret Victor orchestrates the entire process,
+  calling specialized agents at each phase.
+
+  Usage: *forge {squad_name}
+  Example: *forge biblical
+
+trigger:
+  command: "*forge {target}"
+  target_types:
+    - "squad (reads all agents in squads/{name}/agents/)"
+    - "agent (reads single agent file)"
+    - "clone (reads clone from Mentes Sinteticas)"
+
+execution_mode: "autonomous"
+max_interaction: "Phase 0 only (8 questions in 3 groups, skippable), then ZERO interaction"
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# PHASES
+# ═══════════════════════════════════════════════════════════════════════════════
+
+phases:
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  phase_0:
+    name: "Quick Wizard"
+    executor: "bret-victor"
+    type: "interactive"
+    max_questions: 8
+    duration: "3-8 min"
+    template: "wizard-config-tmpl.yaml"
+
+    description: |
+      Expanded personalization wizard — 8 questions in 3 groups.
+      Each group can be skipped with "skip" (uses defaults).
+      "defaults" skips the entire wizard.
+      Smart Detection: If target project has tokens.yaml or design-tokens-spec.yaml,
+      the wizard detects and offers "Use existing tokens" as first option.
+
+    smart_detection:
+      description: "Pre-wizard scan for existing design artifacts"
+      scan_for:
+        - pattern: "tokens.yaml"
+          effect: "Offer 'Use existing tokens' as first option in Q4, Q5, Q6"
+        - pattern: "design-tokens-spec.yaml"
+          effect: "Offer 'Import theme from tokens' as first option in Q4, Q5, Q6"
+        - pattern: "design-systems/manifest.json"
+          effect: "Offer 'Use DS from design-systems/' as FIRST option in ds_framework question"
+          hook: "ds_library_ref"
+          action: "Read manifest.json, list installed DSs, pre-select active DS if set"
+      on_detect: "Set tokens_source to detected file path OR ds_library_ref to active DS path"
+
+    question_groups:
+
+      # ── GROUP 1: Platform Basics ─────────────────────────────────────────────
+      - group: "basics"
+        label: "Platform Basics"
+        skippable: true
+        questions:
+
+          - id: "stack"
+            question: "Stack preference?"
+            group: "basics"
+            default: "next-app-router"
+            options:
+              - value: "next-app-router"
+                label: "Next.js App Router + TypeScript (recommended)"
+              - value: "remix"
+                label: "Remix"
+              - value: "custom"
+                label: "Custom (specify)"
+
+          - id: "domain"
+            question: "Domain/URL for the platform?"
+            group: "basics"
+            default: "{target}.eximia.ai"
+            format: "subdomain.domain.tld"
+
+      # ── GROUP 2: Design System ───────────────────────────────────────────────
+      - group: "design_system"
+        label: "Design System"
+        skippable: true
+        questions:
+
+          - id: "ds_framework"
+            question: "Design system framework?"
+            group: "design_system"
+            default: "shadcn"
+            options:
+              - value: "shadcn"
+                label: "Shadcn/ui + Tailwind v4 (recommended)"
+              - value: "material"
+                label: "Material UI"
+              - value: "ant"
+                label: "Ant Design"
+              - value: "chakra"
+                label: "Chakra UI"
+              - value: "radix"
+                label: "Radix (bare primitives)"
+              - value: "custom"
+                label: "Custom (specify)"
+              - value: "existing"
+                label: "Use DS from design-systems/ (via @eximia/ds)"
+                hook: "ds_library_ref"
+                hook_action: |
+                  Read design-systems/manifest.json.
+                  If manifest exists and has installed DSs, list them and ask which to use.
+                  Set ds_library_ref to the selected DS path (design-systems/{name}/).
+                  If design-systems/ does not exist or is empty, warn:
+                  "Nenhum DS instalado. Use /ds-install para instalar um .dspack primeiro."
+
+          - id: "theme_mode"
+            question: "Theme mode?"
+            group: "design_system"
+            default: "system"
+            options:
+              - value: "light"
+                label: "Light only"
+              - value: "dark"
+                label: "Dark only"
+              - value: "system"
+                label: "System (auto-detect, recommended)"
+              - value: "import"
+                label: "Import theme from existing tokens"
+                condition: "tokens_source != null"
+
+          - id: "brand_colors"
+            question: "Brand colors? (primary, secondary, accent)"
+            group: "design_system"
+            default: "ocean"
+            options:
+              - value: "ocean"
+                label: "Ocean (#0EA5E9, #0F172A, #38BDF8)"
+              - value: "forest"
+                label: "Forest (#22C55E, #14532D, #4ADE80)"
+              - value: "royal"
+                label: "Royal (#8B5CF6, #1E1B4B, #A78BFA)"
+              - value: "fire"
+                label: "Fire (#EF4444, #1A1A2E, #F97316)"
+              - value: "gold"
+                label: "Gold (#D4AF37, #1A1A2E, #E4C84A)"
+              - value: "custom"
+                label: "Custom hex values (specify primary, secondary, accent)"
+              - value: "extract"
+                label: "Extract from existing tokens file"
+                condition: "tokens_source != null"
+
+          - id: "typography"
+            question: "Typography preference?"
+            group: "design_system"
+            default: "system"
+            options:
+              - value: "system"
+                label: "System fonts — Inter (recommended)"
+              - value: "serif"
+                label: "Serif — Merriweather"
+              - value: "mono"
+                label: "Mono — JetBrains Mono"
+              - value: "custom"
+                label: "Custom Google Font (specify)"
+              - value: "tokens"
+                label: "Use font tokens from existing file"
+                condition: "tokens_source != null"
+
+      # ── GROUP 3: Visual Identity ─────────────────────────────────────────────
+      - group: "visual_identity"
+        label: "Visual Identity"
+        skippable: true
+        questions:
+
+          - id: "radius"
+            question: "Border radius style?"
+            group: "visual_identity"
+            default: "rounded"
+            options:
+              - value: "rounded"
+                label: "Rounded — soft, modern (recommended)"
+              - value: "sharp"
+                label: "Sharp — geometric, minimal"
+              - value: "pill"
+                label: "Pill — playful, prominent"
+              - value: "mixed"
+                label: "Mixed — rounded small, sharp large"
+
+          - id: "density"
+            question: "Spacing density?"
+            group: "visual_identity"
+            default: "comfortable"
+            options:
+              - value: "comfortable"
+                label: "Comfortable — balanced (recommended)"
+              - value: "compact"
+                label: "Compact — more content per screen"
+              - value: "spacious"
+                label: "Spacious — generous breathing room"
+
+    output:
+      file: "forge/{target}/wizard-config.yaml"
+      template: "wizard-config-tmpl.yaml"
+      contains:
+        - "platform.stack: chosen tech stack"
+        - "platform.domain: target domain"
+        - "design_system.framework: chosen DS framework"
+        - "design_system.theme_mode: light/dark/system"
+        - "design_system.ds_library_ref: future DS library path"
+        - "brand.colors: primary, secondary, accent hex values"
+        - "brand.typography: heading, body, mono font families"
+        - "brand.radius: border radius style"
+        - "brand.density: spacing density"
+        - "tokens_source: path to existing tokens or null"
+
+    checkpoint:
+      type: "automatic"
+      validation: "All 8 answers provided, defaults accepted, or groups skipped"
+      on_pass: "Proceed to Phase 1"
+      on_fail: "Use defaults for unanswered questions"
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  phase_1:
+    name: "Analysis & Pattern Detection"
+    executor: "bret-victor"
+    type: "autonomous"
+    duration: "5-10 min"
+
+    description: |
+      Bret Victor reads the target squad/agent files and classifies the UI pattern.
+      Applies BV_DX_001 (Pattern Detection) and BV_DX_003 (Capability Mapping).
+
+    steps:
+      - id: "read_agents"
+        action: "Read all agent .md files in target squad"
+        tool: "Read + Glob"
+
+      - id: "pattern_detection"
+        action: "Score all 4 patterns (Chat, Canvas, Wizard, Dashboard)"
+        heuristic: "BV_DX_001"
+        output: "Pattern classification with scores"
+
+      - id: "capability_mapping"
+        action: "Map every agent command to a platform feature"
+        heuristic: "BV_DX_003"
+        output: "Feature map (command → feature → screen)"
+
+      - id: "stack_selection"
+        action: "Recommend specific libraries for detected pattern"
+        heuristic: "BV_DX_002"
+        output: "Stack specification"
+
+    output:
+      file: "forge/{target}/analysis.md"
+      contains:
+        - "Pattern classification (with scores)"
+        - "Feature map (command → feature → screen)"
+        - "Stack specification"
+        - "Agent capability inventory"
+
+    checkpoint:
+      type: "automatic"
+      validation: "Pattern classified, features mapped, stack selected"
+      on_pass: "Proceed to Phase 2"
+      on_fail: "Retry analysis with broader reading"
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  phase_2:
+    name: "Platform Strategy"
+    executor: "wes-bush"
+    type: "autonomous"
+    duration: "10-20 min"
+
+    description: |
+      Wes Bush defines the platform growth strategy: PLG model, onboarding
+      architecture, tenant model, and activation path.
+
+    inputs:
+      - "forge/{target}/analysis.md"
+      - "forge/{target}/wizard-config.yaml"
+
+    steps:
+      - id: "platform_canvas"
+        action: "Generate Platform Canvas (Choudary)"
+        output: "Producers, consumers, core interaction, value exchange"
+
+      - id: "bowling_alley"
+        action: "Design onboarding with Bowling Alley Framework"
+        output: "GREEN/YELLOW/RED step classification, bumpers"
+
+      - id: "activation_map"
+        action: "Define activation moment and TTV targets"
+        output: "Activation definition, time-to-value target"
+
+      - id: "product_model"
+        action: "Recommend monetization model"
+        output: "Free trial / freemium / demo recommendation"
+
+      - id: "tenant_model"
+        action: "Recommend isolation model (Golding)"
+        output: "Pool/Bridge/Silo recommendation with upgrade path"
+
+      - id: "mvp_scope"
+        action: "Define Minimum Viable Platform (Choudary)"
+        output: "Core interaction only — what's v1, what's v2+"
+
+    output:
+      file: "forge/{target}/strategy.md"
+      contains:
+        - "Platform Canvas"
+        - "Bowling Alley onboarding map"
+        - "Activation definition + TTV target"
+        - "Product model recommendation"
+        - "Tenant model recommendation"
+        - "MVP scope (v1 vs v2+)"
+
+    checkpoint:
+      type: "automatic"
+      validation: "All 6 strategy components defined"
+      on_pass: "Proceed to Phase 3"
+      on_fail: "Flag missing components, retry"
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  phase_3:
+    name: "Design System Setup"
+    executor: "design-system"
+    type: "autonomous"
+    duration: "15-30 min"
+
+    description: |
+      Brad Frost (design-system agent) sets up the token system and component
+      library scope for the platform.
+
+    inputs:
+      - "forge/{target}/analysis.md"
+      - "forge/{target}/strategy.md"
+      - "forge/{target}/wizard-config.yaml"
+
+    steps:
+      - id: "token_setup"
+        action: "Generate design tokens for the platform theme"
+        output: "tokens.yaml with color, spacing, typography tokens"
+
+      - id: "component_scope"
+        action: "Define which components are needed based on pattern + features"
+        output: "Component inventory (atoms, molecules, organisms)"
+
+      - id: "theme_config"
+        action: "Configure Shadcn/Tailwind theme from tokens"
+        output: "tailwind.config.ts + shadcn theme"
+
+    output:
+      directory: "forge/{target}/design/"
+      contains:
+        - "tokens.yaml"
+        - "component-inventory.md"
+        - "theme configuration"
+
+    checkpoint:
+      type: "automatic"
+      validation: "Tokens valid, component scope defined, theme configured"
+      on_pass: "Proceed to Phase 4"
+      on_fail: "Retry with @design-system"
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  phase_4:
+    name: "UX Writing & Narrative"
+    executor: "kinneret"
+    type: "autonomous"
+    duration: "15-30 min"
+
+    description: |
+      Kinneret writes all platform interface text: Voice Chart, 11 text patterns,
+      onboarding narrative, empty states, errors.
+
+    inputs:
+      - "forge/{target}/analysis.md"
+      - "forge/{target}/strategy.md"
+
+    steps:
+      - id: "voice_chart"
+        action: "Generate Voice Chart (5 dimensions)"
+        output: "Voice Chart with concepts, vocabulary, verbosity, grammar, punctuation"
+
+      - id: "microcopy_all"
+        action: "Write all 11 UX text patterns"
+        output: "Complete microcopy for titles, buttons, descriptions, empty states, labels, controls, inputs, transitions, confirmations, notifications, errors"
+
+      - id: "onboarding_narrative"
+        action: "Write onboarding flow text (aligned with Bowling Alley)"
+        output: "Step-by-step onboarding microcopy"
+
+    output:
+      file: "forge/{target}/microcopy.md"
+      contains:
+        - "Voice Chart (5 dimensions)"
+        - "All 11 text patterns with examples"
+        - "Onboarding narrative"
+        - "Empty states"
+        - "Error messages"
+        - "Success messages"
+
+    checkpoint:
+      type: "automatic"
+      validation: "Voice Chart complete, all 11 patterns covered, KN_VQ_001 passed"
+      on_pass: "Proceed to Phase 5"
+      on_fail: "Retry with @kinneret"
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  phase_5:
+    name: "Spec & Architecture"
+    executor: "@pm + @architect"
+    type: "autonomous"
+    duration: "30-60 min"
+
+    description: |
+      @pm generates PRD from all accumulated artifacts.
+      @architect generates tech spec + data model.
+
+    inputs:
+      - "forge/{target}/analysis.md"
+      - "forge/{target}/strategy.md"
+      - "forge/{target}/design/"
+      - "forge/{target}/microcopy.md"
+
+    steps:
+      - id: "prd"
+        executor: "@pm"
+        action: "Generate PRD from analysis + strategy + design + microcopy"
+        output: "PRD with features, user stories, acceptance criteria"
+
+      - id: "tech_spec"
+        executor: "@architect"
+        action: "Generate tech spec + data model + API design"
+        output: "Architecture spec with component diagram, data model, API endpoints"
+
+    output:
+      directory: "forge/{target}/spec/"
+      contains:
+        - "prd.md"
+        - "tech-spec.md"
+        - "data-model.md"
+        - "api-design.md"
+
+    checkpoint:
+      type: "automatic"
+      validation: "PRD covers all features from analysis, tech spec covers all components"
+      on_pass: "Proceed to Phase 6"
+      on_fail: "Flag gaps, retry specific section"
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  phase_6:
+    name: "Build"
+    executor: "@dev"
+    type: "autonomous"
+    duration: "2-4 hours"
+
+    description: |
+      @dev implements the platform from spec, using design tokens and microcopy.
+
+    inputs:
+      - "forge/{target}/spec/"
+      - "forge/{target}/design/"
+      - "forge/{target}/microcopy.md"
+      - "forge/{target}/wizard-config.yaml"
+
+    steps:
+      - id: "scaffold"
+        action: "Generate project from platform pattern template"
+        output: "Project structure with routing, layout, base components"
+
+      - id: "features"
+        action: "Implement features from PRD/capability map"
+        output: "All features functional"
+
+      - id: "integration"
+        action: "Integrate design tokens + microcopy"
+        output: "Themed, written interface"
+
+      - id: "agent_api"
+        action: "Connect platform to agent API layer"
+        output: "Platform communicates with agents"
+
+    output:
+      directory: "Platform code in target project directory"
+
+    checkpoint:
+      type: "automatic"
+      validation: "All features work, TypeScript compiles, responsive, accessible"
+      on_pass: "Proceed to Phase 7"
+      on_fail: "Fix and retry (max 2 iterations)"
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  phase_7:
+    name: "QA"
+    executor: "@qa"
+    type: "autonomous"
+    duration: "30-60 min"
+
+    description: |
+      @qa validates the platform against spec, accessibility, and UX standards.
+
+    inputs:
+      - "forge/{target}/spec/"
+      - "Platform code"
+
+    steps:
+      - id: "functional"
+        action: "Validate all features work per PRD acceptance criteria"
+      - id: "accessibility"
+        action: "WCAG 2.2 AA audit"
+      - id: "ux_review"
+        action: "Review against microcopy and onboarding plan"
+      - id: "performance"
+        action: "Lighthouse audit (target: > 90 all categories)"
+
+    output:
+      file: "forge/{target}/qa-report.md"
+
+    checkpoint:
+      type: "automatic"
+      validation: "All checks pass or concerns documented"
+      verdict: "PASS | CONCERNS | FAIL"
+      on_pass: "Proceed to Phase 8"
+      on_concerns: "Proceed with documented concerns"
+      on_fail: "Return to Phase 6 for fixes (max 2 iterations)"
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  phase_8:
+    name: "Deploy"
+    executor: "@devops"
+    type: "autonomous"
+    duration: "15-30 min"
+
+    description: |
+      @devops deploys the platform to production.
+
+    inputs:
+      - "forge/{target}/wizard-config.yaml (domain)"
+      - "QA-approved platform code"
+
+    steps:
+      - id: "hosting"
+        action: "Setup Vercel/hosting for domain"
+      - id: "cicd"
+        action: "Configure CI/CD pipeline"
+      - id: "deploy"
+        action: "Deploy to production"
+      - id: "verify"
+        action: "Verify live URL works"
+
+    output:
+      file: "forge/{target}/deployment.md"
+      contains:
+        - "Live URL"
+        - "CI/CD configuration"
+        - "Environment variables"
+
+    checkpoint:
+      type: "final"
+      validation: "Platform accessible at configured domain"
+      on_pass: "FORGE COMPLETE"
+      on_fail: "Debug deployment, retry"
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# VETO CONDITIONS (per phase)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+veto_conditions:
+  phase_0:
+    - "Target squad/agent does not exist → HALT"
+    - "Smart detection fails silently → proceed without token detection"
+  phase_1:
+    - "No agents found in target → HALT"
+    - "All pattern scores < 3 → HALT (can't classify)"
+  phase_2:
+    - "No core interaction identifiable → HALT"
+  phase_3:
+    - "Design system config invalid → HALT"
+  phase_5:
+    - "PRD has 0 user stories → HALT"
+    - "Tech spec has no data model → HALT"
+  phase_6:
+    - "TypeScript compilation fails after 2 retries → HALT"
+  phase_7:
+    - "FAIL verdict after 2 fix iterations → HALT, escalate"
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# OUTPUT STRUCTURE
+# ═══════════════════════════════════════════════════════════════════════════════
+
+output_structure: |
+  forge/{target}/
+  ├── wizard-config.yaml       # Phase 0 output
+  ├── analysis.md              # Phase 1 output
+  ├── strategy.md              # Phase 2 output
+  ├── design/                  # Phase 3 output
+  │   ├── tokens.yaml
+  │   ├── component-inventory.md
+  │   └── theme/
+  ├── microcopy.md             # Phase 4 output
+  ├── spec/                    # Phase 5 output
+  │   ├── prd.md
+  │   ├── tech-spec.md
+  │   ├── data-model.md
+  │   └── api-design.md
+  ├── qa-report.md             # Phase 7 output
+  └── deployment.md            # Phase 8 output
