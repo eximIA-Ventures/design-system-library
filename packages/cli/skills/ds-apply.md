@@ -1,115 +1,118 @@
 # ds-apply
 
-Aplica o design system ativo no projeto atual — tokens e/ou componentes.
+Integra o design system instalado ao projeto — registra como ativo e prepara o contexto para o Brad Frost e o @dev implementarem.
+
+**Este skill NÃO modifica código do projeto.**
+A aplicação real (tokens no tailwind, componentes no src/) é responsabilidade do Brad Frost (`design:design-system`) e do @dev.
 
 ## Ativação
 
 Ativado via `/ds-apply` no Claude Code.
 
+## O que faz
+
+1. Define o DS como ativo em `design-systems/manifest.json`
+2. Valida a estrutura do DS (tokens, componentes, metodologia)
+3. Gera um resumo de contexto para o Brad Frost e o @dev
+4. Informa os próximos passos
+
 ## Processo
 
-### 1. Identificar DS ativo
+### 1. Identificar DS
 
-Leia `design-systems/manifest.json` → campo `active`.
-
-Se `active` for `null` ou o manifest não existir:
-```
-❌ Nenhum DS ativo. Use /ds-list para ver os disponíveis.
-```
-Interromper.
-
-### 2. Detectar stack do projeto
-
-**Antes de qualquer pergunta**, analise o projeto:
-
-- Leia `package.json` → dependências (`react`, `vue`, `tailwindcss`, `next`, etc.)
-- Verifique se existem: `tailwind.config.*`, `src/styles/`, `src/components/`, `app/`, `components/`
-- Determine:
-  - Framework: React | Vue | Svelte | Vanilla | Next.js | Nuxt
-  - CSS approach: Tailwind | CSS Modules | CSS vars | styled-components
-  - Pasta de componentes: `src/components/` | `components/` | `app/components/` | outro
-
-### 3. Ler manifest do DS
-
-Leia `design-systems/{active}/manifest.json` para saber o que o DS oferece (tokens e componentes disponíveis).
-
-### 4. Wizard de aplicação
-
-Com a stack já detectada, apresente o wizard com informações contextuais:
+Se o usuário passou argumento (`/ds-apply eximia-default`), usar esse.
+Se não, ler `design-systems/manifest.json` e listar instalados:
 
 ```
-🎨 ds:apply — {nome} v{versão}
+🎨 ds:apply — Integrar Design System
 
-Stack detectada: {framework} + {css-approach}
-Componentes serão copiados para: {pasta-detectada}
+DSs instalados:
+  1. eximia-default  v1.0.0  (ativo)
+  2. meu-ds          v2.1.0
 
-O que deseja aplicar?
-  1. Apenas tokens ({formato-detectado}: {arquivo-destino})
-  2. Apenas componentes ({N} atoms, {N} molecules, {N} organisms)
-  3. Tudo (tokens + componentes)
-  4. Modo interativo (escolher arquivo por arquivo)
-
-Selecione:
+Qual integrar? (Enter para usar o ativo)
 ```
 
-### 5. Aplicar tokens
+### 2. Validar estrutura do DS
 
-Baseado na stack detectada, copie para o destino correto:
+Verificar em `design-systems/{nome}/`:
+- `manifest.json` existe e é válido
+- Pasta `tokens/` ou arquivos de token presentes
+- Estrutura Atomic Design presente (`atoms/`, `molecules/`, etc.) — se tiver componentes
 
-| Stack | Arquivo de destino |
-|-------|--------------------|
-| Tailwind | mesclar com `tailwind.config.*` (preservar configurações existentes) |
-| CSS vars | `src/styles/tokens.css` (ou equivalente encontrado) |
-| DTCG JSON | `src/tokens/tokens.json` |
-
-> **Nunca sobrescrever** sem mostrar diff e pedir confirmação se o arquivo já existir.
-
-### 6. Aplicar componentes
-
-Se o destino detectado for diferente do padrão, confirme:
-
+Reportar o que foi encontrado:
 ```
-Pasta de componentes detectada: {pasta}
-Confirma? (s/n ou informe outro caminho)
+Validando eximia-default...
+  ✅ manifest.json  — v1.0.0, Atomic Design
+  ✅ tokens/        — 3 arquivo(s): tokens.json, tokens.css, tokens.tw.js
+  ✅ atoms/         — 12 componente(s)
+  ✅ molecules/     — 8 componente(s)
+  ✅ organisms/     — 4 componente(s)
+  ⚠️  templates/   — vazio
 ```
 
-Copie mantendo a estrutura Atomic Design:
-```
-{pasta}/
-├── atoms/
-├── molecules/
-├── organisms/
-└── templates/
-```
+### 3. Definir como ativo
 
-Se já existirem arquivos com o mesmo nome, pergunte antes de sobrescrever:
-```
-⚠️  Button.tsx já existe. Sobrescrever? (s/n/todos)
+Atualizar `design-systems/manifest.json`:
+```json
+{
+  "active": "eximia-default"
+}
 ```
 
-### 7. Confirmar
+### 4. Gerar contexto de handoff
+
+Criar `design-systems/.ds-context.md` com as informações que o Brad Frost e o @dev precisam:
+
+```markdown
+# DS Ativo: eximia-default v1.0.0
+
+## Localização
+design-systems/eximia-default/
+
+## Tokens disponíveis
+- tokens/tokens.json    — W3C DTCG format
+- tokens/tokens.css     — CSS custom properties
+- tokens/tokens.tw.js   — Tailwind config
+
+## Componentes disponíveis
+Atoms (12):     Button, Input, Label, Badge, Icon, ...
+Molecules (8):  FormField, SearchBar, Card, ...
+Organisms (4):  Header, Sidebar, AuthForm, ...
+Templates (0):  —
+
+## Metodologia
+Atomic Design (Brad Frost)
+
+## Para o Brad Frost (@design-system)
+Use `design-systems/eximia-default/` como fonte de tokens e componentes.
+Não gere tokens novos — reutilize os existentes.
+
+## Para o @dev
+Importe componentes de `design-systems/eximia-default/components/`.
+Tokens CSS disponíveis em `design-systems/eximia-default/tokens/tokens.css`.
+```
+
+### 5. Confirmar integração
 
 ```
-✅ Design System aplicado!
+✅ Design System integrado!
 
-  DS: {nome} v{versão}
+  DS ativo: eximia-default v1.0.0
+  Local:    design-systems/eximia-default/
+  Contexto: design-systems/.ds-context.md
 
-  Tokens:
-    → {arquivo-destino}
+  Próximos passos:
+    → Brad Frost aplicará os tokens e componentes no projeto
+    → @dev implementará os componentes conforme o DS
 
-  Componentes copiados:
-    → {pasta}/atoms/     ({N} arquivos)
-    → {pasta}/molecules/ ({N} arquivos)
-    → {pasta}/organisms/ ({N} arquivos)
-
-  ⚠️  Revise os imports antes de commitar.
-      Alguns caminhos podem precisar de ajuste manual.
+  Para iniciar: @brad-frost *setup ou *build {componente}
 ```
 
 ## Regras
 
-- Detectar stack **antes** de exibir o wizard (para mostrar opções contextuais)
-- Nunca sobrescrever arquivos sem confirmação
-- Mesclar tokens com configurações existentes quando possível
-- Seguir Atomic Design: atoms → molecules → organisms → templates
-- Não aplicar tokens de um framework incompatível (ex: Tailwind tokens em projeto sem Tailwind)
+- NÃO copiar arquivos para `src/` ou qualquer pasta do projeto
+- NÃO modificar `tailwind.config.*`, `package.json` ou qualquer arquivo de configuração do projeto
+- NÃO instalar dependências
+- Apenas registrar, validar e preparar contexto
+- O arquivo `.ds-context.md` é o único output gerado fora de `design-systems/`

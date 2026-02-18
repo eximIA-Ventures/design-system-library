@@ -35,7 +35,7 @@ flowchart TD
 | `/ds-pack` | Empacota um DS existente em `.dspack` |
 | `/ds-install` | Instala um `.dspack` no projeto |
 | `/ds-list` | Lista DSs instalados e disponíveis |
-| `/ds-apply` | Aplica tokens e componentes do DS ativo no projeto |
+| `/ds-apply` | Integra o DS ativo — define como ativo e prepara contexto para Brad Frost e @dev |
 
 ---
 
@@ -66,19 +66,24 @@ flowchart LR
         VALIDATE --> EXTRACT --> UPDATE
     end
 
-    subgraph APLICACAO["/ds-apply"]
-        DETECT[Detectar stack]
-        WIZARD[Wizard contextual]
-        APPLY[Aplicar tokens + componentes]
-        DETECT --> WIZARD --> APPLY
+    subgraph INTEGRACAO["/ds-apply"]
+        VALIDATE2[Validar estrutura do DS]
+        SETACTIVE[Definir como ativo no manifest]
+        CONTEXT[Gerar .ds-context.md para Brad Frost e dev]
+        VALIDATE2 --> SETACTIVE --> CONTEXT
+    end
+
+    subgraph IMPLEMENTACAO["Brad Frost + @dev"]
+        BRAD[Brad Frost aplica tokens]
+        DEV[@dev implementa componentes]
     end
 
     DS --> EMPACOTAMENTO
     EMPACOTAMENTO --> DSPACK
     DSPACK --> INSTALACAO
     INSTALACAO --> MANIFEST2
-    MANIFEST2 --> APLICACAO
-    APLICACAO --> PROJETO[Projeto com DS aplicado]
+    MANIFEST2 --> INTEGRACAO
+    INTEGRACAO --> IMPLEMENTACAO
 ```
 
 ---
@@ -165,7 +170,7 @@ O que deseja fazer?
   1. 📦 Empacotar   — empacotar um DS existente em .dspack
   2. 📥 Instalar    — instalar um .dspack neste projeto
   3. 📋 Listar      — ver DSs instalados e disponíveis
-  4. 🎨 Aplicar     — aplicar o DS ativo no projeto
+  4. 🔗 Integrar    — registrar DS ativo e preparar contexto para Brad Frost e @dev
   5. ❓ Ajuda       — ver dicas e comandos diretos
 
   0. Sair
@@ -215,29 +220,45 @@ flowchart TD
 
 ## /ds-apply
 
+> Integra o DS ao projeto — registra como ativo e prepara o contexto.
+> **Não modifica código.** A aplicação real é responsabilidade do Brad Frost e do @dev.
+
 ```mermaid
 flowchart TD
-    A["/ds-apply"] --> B[Verificar DS ativo]
-    B -->|Nenhum| Z["❌ ds:list para ver opções"]
-    B -->|Encontrado| C[Detectar stack silenciosamente]
-    C --> D[Ler manifest do DS]
-    D --> E[Wizard contextual com opções baseadas na stack]
-    E --> F{O que aplicar?}
-    F --> G[Tokens apenas]
-    F --> H[Componentes apenas]
-    F --> I[Tudo]
-    F --> J[Interativo arquivo por arquivo]
-    G --> K[Preview do que será alterado]
-    H --> K
-    I --> K
-    J --> K
-    K --> L{Confirmar?}
-    L -->|Sim| M[Aplicar com merge]
-    L -->|Não| N[Abortar]
-    M --> O{Conflito de arquivo?}
-    O -->|Sim| P[s=este / t=todos / n=pular]
-    O -->|Não| Q[✅ DS aplicado]
-    P --> Q
+    A["/ds-apply"] --> B{DS informado?}
+    B -->|Sim| C[Usar DS informado]
+    B -->|Não| D[Listar instalados e perguntar]
+    C --> E[Validar estrutura do DS]
+    D --> E
+    E --> F[Definir como ativo em manifest.json]
+    F --> G[Gerar design-systems/.ds-context.md]
+    G --> H["✅ DS integrado"]
+    H --> I["→ Brad Frost aplica tokens\n→ @dev implementa componentes"]
+```
+
+**Output gerado (`design-systems/.ds-context.md`):**
+```markdown
+# DS Ativo: eximia-default v1.0.0
+
+## Localização
+design-systems/eximia-default/
+
+## Tokens disponíveis
+- tokens/tokens.json    — W3C DTCG format
+- tokens/tokens.css     — CSS custom properties
+- tokens/tokens.tw.js   — Tailwind config
+
+## Componentes disponíveis
+Atoms (12):     Button, Input, Label, ...
+Molecules (8):  FormField, SearchBar, ...
+Organisms (4):  Header, Sidebar, ...
+
+## Para o Brad Frost
+Use design-systems/eximia-default/ como fonte.
+Não gere tokens novos — reutilize os existentes.
+
+## Para o @dev
+Importe de design-systems/eximia-default/components/
 ```
 
 ---
