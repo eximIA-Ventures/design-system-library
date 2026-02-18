@@ -13,7 +13,7 @@ Ativado via `/ds-list` no Claude Code.
 Se a pasta `design-systems/` não existir:
 ```
 ❌ design-systems/ não encontrado.
-   Execute: npm install @eximia/ds
+   Execute: npm install @eximia-ventures/ds
 ```
 Interromper.
 

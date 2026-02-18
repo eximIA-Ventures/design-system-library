@@ -245,4 +245,4 @@ Digite:
 - Após cada operação, sempre oferecer próximo passo sugerido ou retorno ao menu
 - Nunca sobrescrever arquivos sem confirmação explícita
 - Detectar stack **antes** de exibir opções de aplicação
-- Se `design-systems/` não existir, orientar: `npm install @eximia/ds`
+- Se `design-systems/` não existir, orientar: `npm install @eximia-ventures/ds`

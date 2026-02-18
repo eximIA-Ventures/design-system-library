@@ -89,7 +89,7 @@ function main() {
 
   if (isOwnRepo(projectRoot)) return;
 
-  console.log('\n🎨 @eximia/ds — Setup\n');
+  console.log('\n🎨 @eximia-ventures/ds — Setup\n');
 
   try {
     createDesignSystemsFolder(projectRoot);

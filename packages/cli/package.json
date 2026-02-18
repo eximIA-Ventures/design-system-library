@@ -1,5 +1,5 @@
 {
-  "name": "@eximia/ds",
+  "name": "@eximia-ventures/ds",
   "version": "0.1.0",
   "description": "Design System manager for Claude Code — pack, install and apply design systems in any project",
   "keywords": ["design-system", "claude-code", "aios", "atomic-design"],
