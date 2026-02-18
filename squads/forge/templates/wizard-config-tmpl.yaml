@@ -38,8 +38,12 @@ design_system:
   # "import" = Import theme from existing tokens file (auto-detected)
   theme_mode: "system"
 
-  # Future: Reference to external DS library (when DS library feature ships)
-  # Set to a path like "libs/my-design-system" to use a custom DS
+  # DS Library Reference — Set by Phase 0 hook when user selects "existing"
+  # Populated by task: tasks/read-ds-manifest.md
+  # Format: "design-systems/{name}/" (path to extracted DS in the project)
+  # If set: Phase 3 (Brad Frost) will REUSE tokens/components from this path
+  # If null: Phase 3 (Brad Frost) will GENERATE tokens from brand.colors/typography
+  # Requires: npm install @eximia-ventures/ds + /ds-install {file.dspack}
   ds_library_ref: null
 
 # ─────────────────────────────────────────────────────────────────────────────
